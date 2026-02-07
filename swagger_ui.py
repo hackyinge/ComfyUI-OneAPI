@@ -108,7 +108,7 @@ SWAGGER_UI_HTML = """
         <h1>✨ ComfyUI-OneAPI-Swagger</h1>
         <p>简洁的 REST API 接口执行 ComfyUI 工作流</p>
         <div class="links">
-            <a href="https://github.com/hackyinge/ComfyUI-OneAPI" target="_blank">📦 GitHub</a>
+            <a href="https://github.com/hackyinge/ComfyUI-OneAPI-Swagger" target="_blank">📦 GitHub</a>
             <a href="/oneapi/openapi.json" target="_blank">📄 OpenAPI JSON</a>
         </div>
     </div>

@@ -6,13 +6,13 @@ license = { file = "LICENSE" }
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/puke3615/ComfyUI-OneAPI"
+Repository = "https://github.com/hackyinge/ComfyUI-OneAPI-Swagger"
 
 [tool.comfy]
-PublisherId = "puke3615"
+PublisherId = "hackyinge"
 DisplayName = "ComfyUI-OneAPI-Swagger"
 Icon = ""
 
 [tool.comfy.author]
-name = "puke3615"
-url = "https://github.com/puke3615"
+name = "hackyinge"
+url = "https://github.com/hackyinge"

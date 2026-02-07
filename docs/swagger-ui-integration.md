@@ -129,7 +129,7 @@
 
 ### 文件结构
 ```
-ComfyUI-OneAPI/
+ComfyUI-OneAPI-Swagger/
 ├── oneapi.py              # 主路由文件（已更新）
 ├── openapi_spec.py        # OpenAPI 规范定义（新增）
 ├── swagger_ui.py          # Swagger UI HTML 模板（新增）
@@ -182,4 +182,4 @@ ComfyUI-OneAPI/
 
 ## 🙏 致谢
 
-本项目基于 [puke3615/ComfyUI-OneAPI](https://github.com/puke3615/ComfyUI-OneAPI) 进行二次开发。感谢原作者的优秀工作和开源贡献！
+本项目基于 [puke3615/ComfyUI-OneAPI](https://github.com/puke3615/ComfyUI-OneAPI) 进行二次开发。感谢原作者的优秀工作和开源贡献！新仓库地址为 [hackyinge/ComfyUI-OneAPI-Swagger](https://github.com/hackyinge/ComfyUI-OneAPI-Swagger)。

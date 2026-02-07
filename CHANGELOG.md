@@ -82,7 +82,7 @@ ComfyUI-OneAPI-Swagger/
 
 ### 🙏 致谢
 
-本项目基于 [puke3615/ComfyUI-OneAPI](https://github.com/puke3615/ComfyUI-OneAPI) 进行二次开发。感谢原作者的优秀工作和开源贡献！
+本项目基于 [puke3615/ComfyUI-OneAPI](https://github.com/puke3615/ComfyUI-OneAPI) 进行二次开发。感谢原作者的优秀工作和开源贡献！新仓库地址为 [hackyinge/ComfyUI-OneAPI-Swagger](https://github.com/hackyinge/ComfyUI-OneAPI-Swagger)。
 
 ---
 

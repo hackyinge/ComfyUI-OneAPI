@@ -46,7 +46,7 @@ ComfyUI-OneAPI-Swagger 提供简洁的 REST API 接口来执行 ComfyUI 工作�
         "version": "1.0.0",
         "contact": {
             "name": "ComfyUI-OneAPI",
-            "url": "https://github.com/hackyinge/ComfyUI-OneAPI"
+            "url": "https://github.com/hackyinge/ComfyUI-OneAPI-Swagger"
         },
         "license": {
             "name": "MIT",

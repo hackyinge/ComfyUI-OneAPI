@@ -149,7 +149,7 @@
 
 - 查看完整文档：`docs/swagger-ui-integration.md`
 - 查看更新日志：`CHANGELOG.md`
-- 访问项目：https://github.com/hackyinge/ComfyUI-OneAPI
+- 访问项目：https://github.com/hackyinge/ComfyUI-OneAPI-Swagger
 
 ## 🙏 致谢
 

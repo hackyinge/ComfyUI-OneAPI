@@ -37,7 +37,7 @@ ComfyUI-OneAPI-Swagger 是一个为 ComfyUI 提供简单REST API接口的插件�
    ```
 3. 克隆此仓库：
    ```bash
-   git clone https://github.com/hackyinge/ComfyUI-OneAPI.git
+   git clone https://github.com/hackyinge/ComfyUI-OneAPI-Swagger.git
    ```
 4. 重启ComfyUI
 
