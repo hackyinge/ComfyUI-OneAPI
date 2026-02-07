@@ -46,7 +46,7 @@ ComfyUI-OneAPI 提供简洁的 REST API 接口来执行 ComfyUI 工作流。
         "version": "1.0.0",
         "contact": {
             "name": "ComfyUI-OneAPI",
-            "url": "https://github.com/puke3615/ComfyUI-OneAPI"
+            "url": "https://github.com/hackyinge/ComfyUI-OneAPI"
         },
         "license": {
             "name": "MIT",
