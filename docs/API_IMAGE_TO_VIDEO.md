@@ -69,7 +69,7 @@
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "Successfully generated video for: 镜头从幼年吴小凡...\n\nGenerated Video URL: http://your-server:6006/view?filename=LTX-2_00001.mp4&type=output"
+        "content": "Successfully generated video for: 镜头从幼年吴小凡...\n\nGenerated Video URL: http://your-server:8118/view?filename=LTX-2_00001.mp4&type=output"
       },
       "finish_reason": "stop"
     }

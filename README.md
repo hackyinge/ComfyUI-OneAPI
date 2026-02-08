@@ -48,7 +48,7 @@ ComfyUI-OneAPI-Swagger 是一个为 ComfyUI 提供简单REST API接口的插件�
 
 安装完成后，您可以访问交互式 API 文档和测试界面：
 
-**👉 访问本地服务：[http://localhost:6006/oneapi/docs](http://localhost:6006/oneapi/docs)**
+**👉 访问本地服务：[http://localhost:8118/oneapi/docs](http://localhost:8118/oneapi/docs)**
 
 Swagger UI 提供了：
 - 📖 **完整的 API 列表**（含 OpenAPI, Gemini, Execute 等所有端点）
@@ -59,7 +59,7 @@ Swagger UI 提供了：
 ### 🚀 仅需一个请求即可执行工作流
 
 ```bash
-curl -X POST "http://localhost:8188/oneapi/v1/execute" \
+curl -X POST "http://localhost:8118/oneapi/v1/execute" \
   -H "Content-Type: application/json" \
   -d '{
     "workflow": {...}  # 支持JSON对象、本地文件名或URL
@@ -144,7 +144,7 @@ response = client.generate_content("a cool steampunk robot")
 通过 `/v1/chat/completions` 端点，你可以直接将 ComfyUI 包装为视频/图像生成服务：
 
 ```bash
-curl http://localhost:6006/v1/chat/completions \
+curl http://localhost:8118/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "ltx2_landscape",
@@ -259,7 +259,7 @@ POST /oneapi/v1/execute
 使用 `/v1/chat/completions` 端点，通过简单的文本提示和可选的图像输入，即可生成视频。
 
 ```bash
-curl http://localhost:8188/v1/chat/completions \
+curl http://localhost:8118/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "ltx2_landscape", # 或 ltx2_portrait
@@ -279,7 +279,7 @@ curl http://localhost:8188/v1/chat/completions \
 ### 📝 文生图示例
 
 ```bash
-curl -X POST "http://localhost:8188/oneapi/v1/execute" \
+curl -X POST "http://localhost:8118/oneapi/v1/execute" \
   -H "Content-Type: application/json" \
   -d '{
     "workflow": "$(cat workflows/example_workflow.json)",  # 支持JSON对象、本地文件名或URL
@@ -292,7 +292,7 @@ curl -X POST "http://localhost:8188/oneapi/v1/execute" \
 ### 🖼️ 图生图示例
 
 ```bash
-curl -X POST "http://localhost:8188/oneapi/v1/execute" \
+curl -X POST "http://localhost:8118/oneapi/v1/execute" \
   -H "Content-Type: application/json" \
   -d '{
     "workflow": "$(cat workflows/example_img2img_workflow.json)",  # 支持JSON对象、本地文件名或URL

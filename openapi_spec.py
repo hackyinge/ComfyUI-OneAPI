@@ -137,12 +137,12 @@ ComfyUI-OneAPI-Swagger 提供简洁的 REST API 接口来执行 ComfyUI 工作�
                                             "status": "completed",
                                             "prompt_id": "12345678-1234-1234-1234-123456789abc",
                                             "images": [
-                                                "http://localhost:8188/view?filename=image1.png&type=output",
-                                                "http://localhost:8188/view?filename=image2.png&type=output"
+                                                "http://localhost:8118/view?filename=image1.png&type=output",
+                                                "http://localhost:8118/view?filename=image2.png&type=output"
                                             ],
                                             "images_by_var": {
-                                                "background": ["http://localhost:8188/view?filename=image1.png&type=output"],
-                                                "character": ["http://localhost:8188/view?filename=image2.png&type=output"]
+                                                "background": ["http://localhost:8118/view?filename=image1.png&type=output"],
+                                                "character": ["http://localhost:8118/view?filename=image2.png&type=output"]
                                             }
                                         }
                                     },
