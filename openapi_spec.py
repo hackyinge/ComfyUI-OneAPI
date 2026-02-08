@@ -71,6 +71,10 @@ ComfyUI-OneAPI-Swagger 提供简洁的 REST API 接口来执行 ComfyUI 工作�
         {
             "name": "gemini",
             "description": "Gemini 兼容接口 (Google AI SDK 适配)"
+        },
+        {
+            "name": "openai",
+            "description": "OpenAI 兼容接口 (支持图生视频)"
         }
     ],
     "paths": {
@@ -285,6 +289,54 @@ ComfyUI-OneAPI-Swagger 提供简洁的 REST API 接口来执行 ComfyUI 工作�
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/GeminiGenerateContentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        },
+        "/v1/chat/completions": {
+            "post": {
+                "tags": ["openai"],
+                "summary": "OpenAI 兼容对话接口",
+                "description": "提供与 OpenAI Chat Completions API 兼容的接口。支持多模态输入（文本+图像），支持图生视频逻辑。",
+                "operationId": "chatCompletions",
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChatCompletionRequest"
+                            },
+                            "examples": {
+                                "i2v": {
+                                    "summary": "多模态图生视频",
+                                    "value": {
+                                        "model": "ltx2_landscape",
+                                        "messages": [
+                                            {
+                                                "role": "user",
+                                                "content": [
+                                                    {"type": "text", "text": "镜头从幼年吴小凡恐惧的视角开始..."},
+                                                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                  "200": {
+                        "description": "成功返回聊天回复 (包含结果链接/Base64)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChatCompletionResponse"
                                 }
                             }
                         }
@@ -539,6 +591,72 @@ ComfyUI-OneAPI-Swagger 提供简洁的 REST API 接口来执行 ComfyUI 工作�
                     }
                 }
             },
+            "ChatCompletionRequest": {
+                "type": "object",
+                "required": ["model", "messages"],
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "description": "模型标识符，对应本地保存的工作流文件名 (如 ltx2_landscape)"
+                    },
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "role": {"type": "string", "enum": ["user", "assistant", "system"]},
+                                "content": {
+                                    "oneOf": [
+                                        {"type": "string"},
+                                        {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": {"type": "string", "enum": ["text", "image_url"]},
+                                                    "text": {"type": "string"},
+                                                    "image_url": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {"type": "string", "description": "Base64 data or image URL"}
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "ChatCompletionResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "object": {"type": "string", "default": "chat.completion"},
+                    "created": {"type": "integer"},
+                    "model": {"type": "string"},
+                    "choices": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "index": {"type": "integer"},
+                                "message": {
+                                    "type": "object",
+                                    "properties": {
+                                        "role": {"type": "string", "default": "assistant"},
+                                        "content": {"type": "string", "description": "生成的回复内容，通常包含媒体链接"}
+                                    }
+                                },
+                                "finish_reason": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

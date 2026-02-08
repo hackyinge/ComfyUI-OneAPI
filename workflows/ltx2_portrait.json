@@ -532,7 +532,7 @@
   },
   "66": {
     "inputs": {
-      "value": 1280
+      "value": 720
     },
     "class_type": "INTConstant",
     "_meta": {
@@ -541,7 +541,7 @@
   },
   "67": {
     "inputs": {
-      "value": 720
+      "value": 1280
     },
     "class_type": "INTConstant",
     "_meta": {

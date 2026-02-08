@@ -286,6 +286,167 @@ async def generate_content(request):
         print(f"Error in generateContent: {str(e)}, {traceback.format_exc()}")
         return web.json_response({"error": str(e)}, status=500)
 
+@routes.post('/v1/chat/completions')
+async def chat_completions(request):
+    """
+    OpenAI 兼容接口 - 支持图生视频
+    
+    请求格式:
+    {
+        "model": "LTX2-SWZ",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "视频描述文本"},
+                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
+                ]
+            }
+        ]
+    }
+    """
+    try:
+        data = await request.json()
+        model = data.get('model', 'LTX2-SWZ')
+        messages = data.get('messages', [])
+        
+        if not messages:
+            return web.json_response({"error": "Messages are required"}, status=400)
+        
+        # 1. 提取内容 (从最后一条消息中提取)
+        last_message = messages[-1]
+        content = last_message.get('content', '')
+        
+        prompt_texts = []
+        image_data = None
+        
+        if isinstance(content, str):
+            prompt_texts.append(content)
+        elif isinstance(content, list):
+            for part in content:
+                p_type = part.get('type', '')
+                if p_type == 'text' or 'text' in part:
+                    txt = part.get('text', '')
+                    if txt: prompt_texts.append(txt)
+                elif p_type == 'image_url' or 'image_url' in part:
+                    image_info = part.get('image_url', {})
+                    if isinstance(image_info, str):
+                        image_data = image_info
+                    else:
+                        image_data = image_info.get('url', '')
+        
+        prompt_text = "\n".join(prompt_texts).strip()
+        
+        print(f"[OneAPI] Processing Video Request:")
+        print(f"  - Model: {model}")
+        print(f"  - Prompt Length: {len(prompt_text)}")
+        if image_data:
+            img_disp = image_data[:50] + "..." if len(image_data) > 50 else image_data
+            print(f"  - Image Data Type: {'URL' if image_data.startswith('http') else 'Base64/Local'}")
+            print(f"  - Image Data Preview: {img_disp}")
+
+        if not prompt_text:
+            return web.json_response({"error": "Prompt text is empty"}, status=400)
+        
+        if not image_data:
+            return web.json_response({"error": "Image data is required for video generation"}, status=400)
+        
+        # 2. 确定工作流
+        workflow_name = model
+        if ':' in workflow_name:
+            workflow_name = workflow_name.split(':')[0]
+        
+        # 优先使用 model 参数指定的工作流文件名称
+        try:
+            workflow = _load_workflow_from_local(workflow_name, request)
+        except Exception:
+            # 如果找不到, 尝试使用默认的 LTX2-SWZ 工作流作为 fallback
+            try:
+                workflow = _load_workflow_from_local('LTX2-SWZ', request)
+            except Exception as e:
+                return web.json_response({"error": f"Workflow '{workflow_name}' or 'LTX2-SWZ' not found. {str(e)}"}, status=404)
+        
+        # 3. 处理图片数据
+        uploaded_filename = None
+        if image_data.startswith('data:image'):
+            try:
+                header, encoded = image_data.split(',', 1)
+                image_bytes = base64.b64decode(encoded)
+                mime_type = header.split(';')[0].split(':')[1]
+                ext = mimetypes.guess_extension(mime_type) or '.png'
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+                    tmp.write(image_bytes)
+                    temp_path = tmp.name
+                
+                try:
+                    uploaded_filename = await _upload_media(temp_path, request)
+                finally:
+                    os.unlink(temp_path)
+            except Exception as e:
+                return web.json_response({"error": f"Failed to process base64 image: {str(e)}"}, status=400)
+        elif image_data.startswith('http'):
+            try:
+                uploaded_filename = await _upload_media_from_source(image_data, request)
+            except Exception as e:
+                return web.json_response({"error": f"Failed to upload image from URL: {str(e)}"}, status=400)
+        else:
+            uploaded_filename = image_data
+        
+        # 4. 设置参数并提交
+        params = {
+            "text": prompt_text,
+            "image": uploaded_filename,
+            "seed": random.randint(1, 1125899906842624)
+        }
+        
+        workflow = await _apply_params_to_workflow(workflow, params, request)
+        output_id_2_var = await _extract_output_nodes(workflow)
+        client_id = str(uuid.uuid4())
+        
+        prompt_id = await _queue_prompt(workflow, client_id, {}, request)
+        
+        # 5. 等待结果
+        execution_result = await _wait_for_results(prompt_id, 600, request, output_id_2_var)
+        
+        if execution_result.get('status') != 'completed':
+            error_msg = execution_result.get('error', execution_result.get('status', 'Unknown error'))
+            return web.json_response({"error": f"Execution failed: {error_msg}"}, status=500)
+        
+        # 6. 构建 OpenAI 格式响应
+        videos = execution_result.get('videos', [])
+        response_content = f"Successfully generated video for: {prompt_text}"
+        if videos:
+            response_content += f"\n\nGenerated Video URL: {videos[0]}"
+        
+        response_data = {
+            "id": f"chatcmpl-{uuid.uuid4()}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": response_content
+                    },
+                    "finish_reason": "stop"
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0
+            }
+        }
+        
+        return web.json_response(response_data)
+        
+    except Exception as e:
+        print(f"Error in chatCompletions: {str(e)}, {traceback.format_exc()}")
+        return web.json_response({"error": str(e)}, status=500)
+
 
 
 async def _fetch_image_base64(url):
@@ -607,24 +768,27 @@ async def _get_base_url(request):
 
 def _get_internal_api_url(request):
     """
-    Get internal API base URL for ComfyUI API calls.
-    Uses the same host and port from the incoming request to avoid hardcoding.
-    
-    Args:
-        request: HTTP request object
-        
-    Returns:
-        Internal API base URL string (e.g., "http://192.168.100.170:4020")
+    获取 ComfyUI 内部 API 的基础 URL。
+    优先从当前运行的服务器实例中获取端口，避免硬编码。
     """
-    # Default to localhost
-    internal_url = "http://127.0.0.1:8188"
+    # 尝试从 PromptServer 获取端口配置
+    port = getattr(prompt_server.instance, "port", 8188)
+    if not port and hasattr(prompt_server.instance, "app"):
+        # 兜底：从 aiohttp 配置中尝试
+        pass
     
+    internal_url = f"http://127.0.0.1:{port}"
+    
+    # 如果有 request 且 Host 头可用，可以更精准地定位（主要用于反向代理透传）
     if request:
         host = request.headers.get('Host')
         if host:
-            # For internal API calls, always use http (not https)
-            # as we're calling the same server
-            internal_url = f"http://{host}"
+            # 内部分发请求始终建议用 http
+            # 如果 Host 包含端口则直接使用，否则拼接默认
+            if ':' in host:
+                internal_url = f"http://{host}"
+            else:
+                internal_url = f"http://{host}" # 保持原样，aiohttp 会处理或者已含端口
     
     return internal_url
 
