@@ -23,6 +23,19 @@ from swagger_ui import SWAGGER_UI_HTML
 # Constants
 API_WORKFLOWS_DIR = 'api_workflows'
 
+
+def _get_auth_headers(request):
+    """Extract auth headers from the original request for internal API calls."""
+    headers = {}
+    if request:
+        auth = request.headers.get("Authorization")
+        if auth:
+            headers["Authorization"] = auth
+        cookie = request.headers.get("Cookie")
+        if cookie:
+            headers["Cookie"] = cookie
+    return headers
+
 # Node types that require special media upload handling
 MEDIA_UPLOAD_NODE_TYPES = {
     'LoadImage',
@@ -328,7 +341,7 @@ async def generate_content(request):
         
         images = execution_result.get('images', [])
         for img_url in images:
-            img_data_base64 = await _fetch_image_base64(img_url)
+            img_data_base64 = await _fetch_image_base64(img_url, request)
             if img_data_base64:
                 parts.append({
                     "inlineData": {
@@ -357,11 +370,12 @@ async def generate_content(request):
 
 
 
-async def _fetch_image_base64(url):
+async def _fetch_image_base64(url, request=None):
     """Fetch image and return base64 encoded string"""
     try:
+        auth_headers = _get_auth_headers(request)
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
+            async with session.get(url, headers=auth_headers) as response:
                 if response.status == 200:
                     data = await response.read()
                     return base64.b64encode(data).decode('utf-8')
@@ -398,13 +412,23 @@ async def chat_completions(request):
         
         if not messages:
             return web.json_response({"error": "Messages are required"}, status=400)
-        
-        # 1. 提取提示词和所有图片 (支持多条消息合并)
+        # 1. 提取提示词和所有图片 (仅提取最后一条用户消息，防止被历史数据污染)
         prompt_texts = []
         image_data_list = []
         
-        for message in messages:
-            content = message.get('content', '')
+        # 反向查找最后一条用户发送的消息
+        last_user_message = None
+        for message in reversed(messages):
+            if message.get('role') == 'user':
+                last_user_message = message
+                break
+        
+        # 如果没有用户消息，就直接取最后一条
+        if not last_user_message and messages:
+            last_user_message = messages[-1]
+            
+        if last_user_message:
+            content = last_user_message.get('content', '')
             if isinstance(content, str):
                 prompt_texts.append(content)
             elif isinstance(content, list):
@@ -554,13 +578,13 @@ async def chat_completions(request):
 
         response_content = f"Generation complete."
         if videos: 
-            video_url = f"{base_url}/view?filename={videos[0]}&type=output"
+            video_url = videos[0]
             response_content += f"\nVideo: {video_url}"
         if audios: 
-            audio_url = f"{base_url}/view?filename={audios[0]}&type=output"
+            audio_url = audios[0]
             response_content += f"\nAudio: {audio_url}"
         if images and not videos:
-            img_url = f"{base_url}/view?filename={images[0]}&type=output"
+            img_url = images[0]
             response_content += f"\nImage: {img_url}"
         
         response_data = {
@@ -584,11 +608,12 @@ async def chat_completions(request):
 
 
 
-async def _fetch_image_base64(url):
+async def _fetch_image_base64(url, request=None):
     """Fetch image and return base64 encoded string"""
     try:
+        auth_headers = _get_auth_headers(request)
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
+            async with session.get(url, headers=auth_headers) as response:
                 if response.status == 200:
                     data = await response.read()
                     return base64.b64encode(data).decode('utf-8')
@@ -987,8 +1012,9 @@ async def _upload_media(media_path, request=None) -> str:
     
     # Upload media using dynamic server URL
     internal_url = _get_internal_api_url(request)
+    auth_headers = _get_auth_headers(request)
     async with aiohttp.ClientSession() as session:
-        async with session.post(f"{internal_url}/upload/image", data=data) as response:
+        async with session.post(f"{internal_url}/upload/image", data=data, headers=auth_headers) as response:
             if response.status != 200:
                 raise Exception(f"Failed to upload media: HTTP {response.status}")
             
@@ -1011,11 +1037,13 @@ async def _queue_prompt(workflow, client_id, prompt_ext_params=None, request=Non
     
     # Use aiohttp to send request with dynamic server URL
     internal_url = _get_internal_api_url(request)
+    auth_headers = _get_auth_headers(request)
+    auth_headers["Content-Type"] = "application/json"
     async with aiohttp.ClientSession() as session:
         async with session.post(
-                f"{internal_url}/prompt", 
+                f"{internal_url}/prompt",
                 data=json_data,
-                headers={"Content-Type": "application/json"}
+                headers=auth_headers
             ) as response:
             if response.status != 200:
                 response_text = await response.text()
@@ -1126,7 +1154,7 @@ def _split_media_by_suffix(node_output, base_url):
                 print(f"Invalid media data: {media_key} | {media_data}")
                 continue
             
-            url = f"{base_url}/view?filename={filename}"
+            url = f"{base_url}/api/view?filename={filename}"
             if subfolder:
                 url += f"&subfolder={subfolder}"
             if media_type:
@@ -1171,8 +1199,9 @@ async def _wait_for_results(prompt_id, timeout=None, request=None, output_id_2_v
 
         # Get history using HTTP API with dynamic server URL
         internal_url = _get_internal_api_url(request)
+        auth_headers = _get_auth_headers(request)
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"{internal_url}/history/{prompt_id}") as response:
+            async with session.get(f"{internal_url}/history/{prompt_id}", headers=auth_headers) as response:
                 if response.status != 200:
                     await asyncio.sleep(1.0)
                     continue
